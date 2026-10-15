@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d63384">
+<meta name="description" content="A pink diabetes blood sugar journal.">
+<link rel="manifest" href="manifest.json">
+<title>Sugar & Sparkles</title>
+<style>
+:root{--pink:#d63384;--deep:#8f2059;--pale:#fff0f7;--rose:#f8c5df;--line:#f0b9d6;--ink:#573149}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(135deg,#fff7fb,#ffe5f1);color:var(--ink)}
+header{padding:24px 18px 20px;text-align:center;background:radial-gradient(circle at 15% 20%,#fff 0 1px,transparent 2px),radial-gradient(circle at 75% 45%,#fff 0 1px,transparent 2px),linear-gradient(135deg,#f6a9d0,#fbd7e9 55%,#ef9ac8);background-size:34px 34px,47px 47px,auto;border-radius:0 0 28px 28px;color:#7c174c;box-shadow:0 5px 18px #c94b8a22}
+h1{font-size:clamp(1.6rem,7vw,2.1rem);margin:0 0 5px}header p{margin:0;font-weight:600}.heart{font-size:1.25rem}
+main{max-width:720px;margin:auto;padding:14px;display:grid;gap:14px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat,.card{background:#fff;border:1px solid #f9d5e7;border-radius:18px;padding:15px;box-shadow:0 5px 15px #9d2c6710}.stat small{display:block;color:#9b4b77}.stat strong{font-size:1.8rem;color:var(--deep)}
+nav{display:flex;gap:8px}button{font:inherit;border:0;border-radius:14px;padding:12px 14px;font-weight:700;cursor:pointer}nav button{flex:1;background:#fff;color:var(--deep);border:1px solid var(--line)}nav button.active,.primary{background:var(--pink);color:#fff}
+h2{font-size:1.15rem;color:var(--deep);margin:0 0 12px}label{display:block;font-weight:650;color:var(--deep);margin:10px 0 5px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}textarea{min-height:74px;resize:vertical}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{width:100%;margin-top:14px}.hint{font-size:.83rem;line-height:1.45;color:#7b5268}.entry{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}.entrytop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.num{font-size:1.5rem;font-weight:800;color:var(--deep)}.entry small{color:#8e5575}.delete{background:#fff0f7;color:#9d285f;padding:7px 10px}.hidden{display:none!important}.notice{background:#ffe3ef;padding:12px;border-radius:12px;font-size:.85rem;line-height:1.45}.empty{text-align:center;padding:22px;color:#95527a}.pill{display:inline-block;background:#fff0f7;border-radius:99px;padding:4px 9px;font-size:.78rem;color:#8f2059}
+</style>
+</head>
+<body>
+<header><div class="heart">✨ 💗 ✨</div><h1>Sugar & Sparkles</h1><p>My Pink Glitter Diabetes Journal</p><div class="heart">One reading at a time. 💖</div></header>
+<main>
+<section class="stats">
+ <div class="stat"><small>Readings saved</small><strong id="count">0</strong></div>
+ <div class="stat"><small>Average (mg/dL)</small><strong id="average">—</strong></div>
+</section>
+<nav><button id="logTab" class="active" type="button">💗 Log Sugar</button><button id="historyTab" type="button">✨ My History</button></nav>
+<section id="logView" class="card">
+<h2>💗 Log a new reading</h2>
+<form id="logForm">
+<label for="reading">Blood sugar (mg/dL) *</label><input id="reading" type="number" min="1" max="1500" step="1" placeholder="e.g. 121" required>
+<div class="grid2"><div><label for="when">When did you check?</label><select id="when"><option>Fasting</option><option>Before meal</option><option>After meal</option><option>Bedtime</option><option>Other time</option></select></div><div><label for="date">Date</label><input id="date" type="date" required></div></div>
+<label for="time">Time</label><input id="time" type="time" required>
+<label for="food">What did you eat or drink?</label><textarea id="food" placeholder="Food, drinks, approximate time after eating..."></textarea>
+<label for="symptoms">How are you feeling?</label><textarea id="symptoms" placeholder="Thirsty, shaky, tired, headache, or feeling fine..."></textarea>
+<label for="meds">Medication notes (optional)</label><input id="meds" placeholder="e.g. taken as prescribed or missed dose">
+<button class="primary full" type="submit">💖 Save My Reading</button>
+</form>
+</section>
+<section id="historyView" class="card hidden"><h2>✨ My sugar history</h2><p class="hint">Entries are stored on this device in this browser. Export a backup regularly.</p><button id="exportBtn" class="primary" type="button">Download CSV backup</button><button id="clearBtn" class="delete" type="button" style="margin-left:6px">Clear all</button><div id="entries"></div></section>
+<section class="notice"><strong>Health reminder 💕</strong><br>Your personal glucose targets should come from your healthcare professional. This journal does not diagnose or treat diabetes. If you have severe symptoms or a dangerously low/high reading, follow your care plan and seek medical help when needed.</section>
+</main>
+<script>
+const KEY='sugarSparklesEntriesV1';
+const $=id=>document.getElementById(id);
+let entries=[];
+try{entries=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(entries))entries=[]}catch(e){entries=[]}
+const today=new Date();$('date').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+$('time').value=String(today.getHours()).padStart(2,'0')+':'+String(today.getMinutes()).padStart(2,'0');
+function save(){localStorage.setItem(KEY,JSON.stringify(entries));render()}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){
+ $('count').textContent=entries.length;
+ $('average').textContent=entries.length?Math.round(entries.reduce((s,e)=>s+Number(e.reading),0)/entries.length):'—';
+ $('entries').innerHTML=entries.length?entries.slice().sort((a,b)=>(b.date+'T'+b.time).localeCompare(a.date+'T'+a.time)).map(e=>`<article class="entry"><div class="entrytop"><div><div class="num">${escapeHtml(e.reading)} <span style="font-size:.8rem;font-weight:600">mg/dL</span></div><small>${escapeHtml(e.when)} · ${escapeHtml(e.date)} · ${escapeHtml(e.time)}</small></div><button class="delete" data-delete="${escapeHtml(e.id)}" type="button" aria-label="Delete entry">Delete</button></div>${e.food?`<p>🍓 <b>Food/drink:</b> ${escapeHtml(e.food)}</p>`:''}${e.symptoms?`<p>💗 <b>Feeling:</b> ${escapeHtml(e.symptoms)}</p>`:''}${e.meds?`<p>💊 <b>Medication:</b> ${escapeHtml(e.meds)}</p>`:''}</article>`).join(''):'<div class="empty">💗 Your story starts here.<br>Save your first reading in Log Sugar.</div>';
+}
+$('logTab').onclick=()=>show('log');$('historyTab').onclick=()=>show('history');
+function show(which){$('logView').classList.toggle('hidden',which!=='log');$('historyView').classList.toggle('hidden',which!=='history');$('logTab').classList.toggle('active',which==='log');$('historyTab').classList.toggle('active',which==='history');if(which==='history')render()}
+$('logForm').addEventListener('submit',e=>{e.preventDefault();const n=Number($('reading').value);if(!Number.isFinite(n)||n<=0||n>1500){alert('Please enter a valid reading in mg/dL.');return}entries.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),reading:n,when:$('when').value,date:$('date').value,time:$('time').value,food:$('food').value.trim(),symptoms:$('symptoms').value.trim(),meds:$('meds').value.trim()});save();$('reading').value='';$('food').value='';$('symptoms').value='';$('meds').value='';show('history')});
+$('entries').addEventListener('click',e=>{const id=e.target.dataset.delete;if(id&&confirm('Delete this reading?')){entries=entries.filter(x=>x.id!==id);save()}});
+$('clearBtn').onclick=()=>{if(confirm('Delete ALL saved readings from this device? Export a backup first if you need one.')){entries=[];save()}};
+$('exportBtn').onclick=()=>{const cols=['date','time','reading','when','food','symptoms','meds'];const csv=[cols.join(','),...entries.map(e=>cols.map(k=>'"'+String(e[k]??'').replace(/"/g,'""')+'"').join(','))].join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='sugar-and-sparkles-log.csv';a.click();URL.revokeObjectURL(url)};
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+render();
+</script>
+</body></html>
